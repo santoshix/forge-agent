@@ -8,7 +8,7 @@ A local Python issue-to-patch workbench with a FastAPI dashboard, LangGraph work
 
 ## Windows: start here
 
-1. Extract the entire ZIP. Open the extracted `forge-agent` folder.
+1. Clone this repository or use **Code → Download ZIP** on GitHub, extract the archive, and open the `forge-agent` folder.
 2. Double-click `setup_windows.bat`. This uses Python **3.12** and installs dependencies. Internet is needed once for package installation.
 3. When it says **Setup complete**, double-click `START_FORGEAGENT.bat`.
 4. Keep the terminal open. Once it says **Application startup complete**, open **http://127.0.0.1:8001**.
@@ -49,6 +49,12 @@ CLI runs export `changes.patch`, `PULL_REQUEST.md`, and `run.json` under `runtim
 ## Real AI mode and GitHub
 
 See [REAL_AI_SETUP.md](docs/REAL_AI_SETUP.md) for exact Windows commands, model setup, Docker runner and draft PR publishing. Review the patch before publishing. There is no automatic merge or push to the default branch.
+
+## What the demo proves (and what it does not)
+
+The no-cost demo uses **scripted fixes**, not LLM-generated code. It genuinely runs tests on three bundled examples, displays before/after evidence and produces review artifacts. A passing scripted demo does **not** prove that an Ollama model can solve unseen GitHub issues or that remote draft PR publication has been exercised.
+
+Real AI mode requires a locally running Ollama model and Docker for untrusted code execution. GitHub publishing additionally requires an authorized GitHub token and an explicit separate publishing command; it never auto-merges. Do not describe the project as a fully autonomous or production-ready coding agent.
 
 ## Validation
 
