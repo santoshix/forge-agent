@@ -1,0 +1,1 @@
+average([]) must return 0. Preserve the arithmetic mean for nonempty lists.

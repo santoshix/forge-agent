@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-11-02T06:14:49.480264+00:00",
+  "python": "3.12.14",
+  "platform": "Linux",
+  "scope": "Scripted proposals with actual unittest execution; NOT an LLM benchmark.",
+  "cases": [
+    {
+      "case": "average",
+      "status": "review_ready",
+      "baseline_tests": 3,
+      "baseline_passed": false,
+      "after_tests": 3,
+      "after_passed": true,
+      "elapsed_seconds": 0.15
+    },
+    {
+      "case": "discount",
+      "status": "review_ready",
+      "baseline_tests": 3,
+      "baseline_passed": false,
+      "after_tests": 3,
+      "after_passed": true,
+      "elapsed_seconds": 0.15
+    },
+    {
+      "case": "unique",
+      "status": "review_ready",
+      "baseline_tests": 3,
+      "baseline_passed": false,
+      "after_tests": 3,
+      "after_passed": true,
+      "elapsed_seconds": 0.15
+    }
+  ],
+  "passed_cases": 3,
+  "total_cases": 3
+}
