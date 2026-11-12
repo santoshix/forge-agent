@@ -1,95 +1,159 @@
-# ForgeAgent — AI Software Engineering Agent
+# ForgeAgent — AI-Assisted Software Engineering Workbench
 
-A local Python issue-to-patch workbench with a FastAPI dashboard, LangGraph workflow, test evidence, and explicitly requested GitHub draft pull requests. No AWS account required.
+**A local issue-to-patch engineering assistant** built with **Python, LangGraph, FastAPI, Docker, SQLite/PostgreSQL, and optional Ollama**. Inspect failing Python tests, propose bounded code changes, verify fixes, review diffs, and optionally create an explicitly approved **GitHub draft pull request**.
 
-**Start with the free deterministic demo.** It fixes three bundled Python bugs using scripted proposals and actually executes the tests before and after each fix. It does not call an LLM. Optional real mode asks an Ollama model to propose changes to a small Python repository and tests those changes in Docker.
+> **Important distinction:** ForgeAgent's included, no-cost **demo uses scripted fixes, not an LLM**. It executes real before/after unit tests and demonstrates the LangGraph pipeline. **Real AI mode** separately uses a local Ollama model to propose changes, but live model success rates and real remote PR publishing have **not** been established by the bundled demo evidence. This is a bounded portfolio prototype, not a production-ready autonomous programmer.
 
-![Dashboard](reports/dashboard_desktop.png)
+![ForgeAgent dashboard](reports/dashboard_desktop.png)
 
-## Windows: start here
+## Verified demo results
 
-1. Clone this repository or use **Code → Download ZIP** on GitHub, extract the archive, and open the `forge-agent` folder.
-2. Double-click `setup_windows.bat`. This uses Python **3.12** and installs dependencies. Internet is needed once for package installation.
-3. When it says **Setup complete**, double-click `START_FORGEAGENT.bat`.
-4. Keep the terminal open. Once it says **Application startup complete**, open **http://127.0.0.1:8001**.
-5. Choose **Handle an empty average**, then click **Run engineering workflow**. Review the failing baseline, passing verification, patch, and draft description.
-6. Try the other two cases. Double-click `TEST_PROJECT.bat` to run the project tests.
+| Evaluation | Recorded result |
+|---|---:|
+| Bundled scripted cases | **3 / 3 review-ready** |
+| Before-fix test status | **Failing** in all 3 cases |
+| After-fix test status | **Passing** in all 3 cases |
+| Automated Python test suite (delivery-time) | **42 passed** |
 
-Python 3.12 already installed for InspectAI can be reused. ForgeAgent creates its own `.venv-forge`; it does not modify InspectAI. No API key, Docker, or model download is needed for the demo. No C++ coding is required.
+The three scripted examples cover an empty average, a discount calculation, and unique values. Results come from [`reports/demo_evaluation.json`](reports/demo_evaluation.json) and [`reports/verification.md`](reports/verification.md). They **are not an LLM benchmark**: the demo chooses known fixes and genuinely runs tests before and after applying them. Verify current repository CI separately in [GitHub Actions](https://github.com/santoshix/forge-agent/actions).
 
-## Features and scope
+## What ForgeAgent does
 
-| Capability | Implementation |
-|---|---|
-| Workflow | LangGraph: inspect → propose → verify |
-| Baseline | Must discover tests and reproduce a failure before proposing a fix |
-| Real model | Ollama JSON response with complete replacements for existing source modules |
-| Policy | Up to 100 Python files / 200 KB; at most 5 edited source modules; tests are immutable |
-| Execution | Trusted demo subprocess; Docker required for real repository code |
-| Review | Unified diff, logs, trace, original snapshot, JSON export and PR draft |
-| Storage | SQLite default; PostgreSQL through SQLAlchemy and optional Compose |
-| GitHub | Read issue/default-branch snapshot; separate command creates a branch and draft PR |
-| Interface | Responsive dashboard, local API documentation and CLI |
+- **LangGraph workflow:** inspect the issue and baseline → propose source changes → verify the patched code.
+- **Real test evidence:** capture baseline and post-change unittest results; reject solutions without a reproduced failure.
+- **Bounded patching:** allow limited replacements of existing Python source files, while preventing test edits, arbitrary commands, dependency changes, and path traversal.
+- **Human review:** show unified diffs, logs, snapshots, execution traces, exported JSON evidence, and a draft PR description.
+- **Local AI option:** use a locally running Ollama model to propose changes to a supported repository, then verify them inside Docker.
+- **GitHub integration:** read an issue/default-branch snapshot; an **explicit, separate** publish command can create a branch and draft PR after rechecking the base and rerunning verification.
+- **Dashboard and CLI:** FastAPI with a browser interface, SQLite by default, and optional PostgreSQL via Compose.
 
-Supported real repositories have **standard-library-only Python code in `src/` and unittest tests in `tests/test*.py`**, importing from `src`. Existing source files can be changed; new files, test edits, dependency changes, binaries, symlinks, and arbitrary shell commands are not supported. This is a deliberately bounded portfolio project, not a general-purpose autonomous production engineer.
+## Architecture
 
-## Command line
+```text
+Issue + source snapshot
+          ↓
+     LangGraph
+          ↓
+  Inspect existing tests ──→ baseline failure required
+          ↓
+  Propose code changes  ──→ scripted demo OR Ollama
+          ↓
+  Validate edit policy  ──→ existing source files only
+          ↓
+  Run patched tests     ──→ demo subprocess / Docker real mode
+          ↓
+  Diff + logs + draft   ──→ dashboard, JSON and export
+          ↓
+  Explicit user action  ──→ optional GitHub branch + DRAFT PR
+```
 
-Run commands in the project folder. On Windows:
+**No automatic merging or changes to the analyzed repository's default branch.** Real mode is deliberately limited to standard-library-only Python repositories with `src/` and `tests/test*.py` unittest files. It supports at most five existing source modules per proposal; tests and dependency files cannot be modified. The standard local app is intended for a single user and is **not** a multi-tenant service.
 
-```bat
+## Start the free demo on Windows
+
+No Docker, Ollama, cloud account, API key, or paid inference provider is needed for the scripted demo.
+
+1. Install **64-bit Python 3.12**.
+2. Clone this repository, or use GitHub **Code → Download ZIP** and extract it.
+3. In the project directory, double-click **`setup_windows.bat`**.
+4. Double-click **`START_FORGEAGENT.bat`** after setup completes.
+5. Visit **http://127.0.0.1:8001**.
+6. Select **Handle an empty average** → **Run engineering workflow**. Review the failing baseline, passing verification, patch, and PR draft. Try the other two cases.
+
+```powershell
+git clone https://github.com/santoshix/forge-agent.git
+cd forge-agent
+```
+
+Keep the server window open. Press Ctrl+C to stop. Setup creates `.venv-forge`, separate from other Python projects.
+
+### Command-line demo
+
+```powershell
 .venv-forge\Scripts\python.exe -m forge.cli demo --case average
 .venv-forge\Scripts\python.exe -m forge.cli demo --case discount
 .venv-forge\Scripts\python.exe -m forge.cli demo --case unique
 .venv-forge\Scripts\python.exe -m pytest -q
 ```
 
-CLI runs export `changes.patch`, `PULL_REQUEST.md`, and `run.json` under `runtime/exports/<run-id>/`. The source repository is never modified by a run. Use `python -m forge.cli export RUN_ID` to export a dashboard run. On macOS/Linux, run `sh start.sh` with Python 3.12 installed, then use `.venv-forge/bin/python` for CLI commands.
+Runs produce `changes.patch`, `PULL_REQUEST.md`, and `run.json` under `runtime/exports/<run-id>/`. The input repository is not modified by a demo run. On Linux, create the Python 3.12 environment using the provided setup documentation and launch with `sh start.sh`.
 
-## Real AI mode and GitHub
+See [demo walkthrough and interview questions](docs/DEMO_AND_INTERVIEW.md) and [troubleshooting](docs/TROUBLESHOOTING.md).
 
-See [REAL_AI_SETUP.md](docs/REAL_AI_SETUP.md) for exact Windows commands, model setup, Docker runner and draft PR publishing. Review the patch before publishing. There is no automatic merge or push to the default branch.
+## Try real AI-assisted code proposals
 
-## What the demo proves (and what it does not)
+The optional AI mode requires **Ollama running locally**, a supported Python repository, and **Docker** to run its tests in an isolated container. A code-capable model must be downloaded separately; no model weights are bundled.
 
-The no-cost demo uses **scripted fixes**, not LLM-generated code. It genuinely runs tests on three bundled examples, displays before/after evidence and produces review artifacts. A passing scripted demo does **not** prove that an Ollama model can solve unseen GitHub issues or that remote draft PR publication has been exercised.
+1. Install Ollama and Docker Desktop.
+2. Download a compatible local model and configure the exact installed name in `OLLAMA_MODEL`.
+3. Build the restricted runner image.
+4. Run a local issue against an intentionally buggy example, inspect the diff and test output, and approve any GitHub publishing separately.
 
-Real AI mode requires a locally running Ollama model and Docker for untrusted code execution. GitHub publishing additionally requires an authorized GitHub token and an explicit separate publishing command; it never auto-merges. Do not describe the project as a fully autonomous or production-ready coding agent.
+**Detailed commands and permissions:** [`docs/REAL_AI_SETUP.md`](docs/REAL_AI_SETUP.md).
 
-## Validation
+**Boundaries:** The agent does not modify test files, install arbitrary dependencies, run model-chosen shell commands, or execute an autonomous multi-attempt repair loop. Passing tests support review; they do not guarantee correctness. Live Ollama effectiveness on unseen repositories is **not demonstrated** by the bundled scripted evaluation.
 
-See [verification.md](reports/verification.md), [tests.txt](reports/tests.txt), and [demo_evaluation.json](reports/demo_evaluation.json). Demo results measure the bundled scripted cases only; they are not LLM benchmark scores. Live Ollama, Docker execution, PostgreSQL and remote PR publishing must be checked in your own environment; their integration contracts are covered with mocks where stated in the report.
+### GitHub draft PR flow
 
-## Project map
+```text
+Read authorized issue + snapshot → test baseline → propose and verify fix
+       → human reviews patch → explicit publish --confirm
+       → revalidate repository base + tests → create branch + DRAFT PR
+```
 
-- `forge/`: API, workflow, model adapter, policy, executor, storage, GitHub and CLI.
-- `web/`: dashboard HTML, CSS and JavaScript, no frontend build required.
-- `tests/`: workflow, policy, timeout, API and mocked integration tests.
-- `examples/mini_repo/`: intentionally buggy standard-library example for real mode.
-- `docs/`: setup, architecture, interview guide, security boundaries and troubleshooting.
-- `reports/`: reproducible demo evaluation, test results and UI screenshots.
+Use a GitHub token restricted to a repository you own or have permission to edit. Never commit a token to this repository or paste it into issues, screenshots, or chat. Remote PR publishing requires live credentials and has **not been verified end to end** by the bundled validation report.
 
-## Configuration
+## API, data, and deployment
 
-| Variable | Default / purpose |
+FastAPI serves the dashboard at http://127.0.0.1:8001 and API documentation at http://127.0.0.1:8001/docs. `GET /api/config` supplies a local session token; mutating requests include it as `X-Forge-Token`. This is a local request safeguard, **not real user authentication**.
+
+| Component | Implementation |
 |---|---|
-| `DATABASE_URL` | `sqlite:///runtime/forge.db` |
-| `OLLAMA_MODEL` | Required only for real mode; installed model tag |
-| `OLLAMA_URL` | `http://127.0.0.1:11434` |
-| `FORGE_REPO_PATH` | Enables real mode in dashboard; absolute local repository path |
-| `FORGE_RUNNER_IMAGE` | `forge-runner:1`; build before real runs |
-| `GITHUB_TOKEN` | Optional for public reads; required to publish |
+| Workflow | LangGraph |
+| API and dashboard | FastAPI + HTML/CSS/JavaScript |
+| Optional local LLM | Ollama |
+| Execution | Demo subprocess; Docker runner for real code |
+| Persistence | SQLite; PostgreSQL supported |
+| GitHub publication | Explicit draft PR only |
+| Verification | unittest, pytest, GitHub Actions |
 
-`.env` is read by Docker Compose only. Set environment variables in the command prompt that launches the Python process. The dashboard is intended for your own computer: keep it bound to 127.0.0.1. It has no multi-user authentication.
+For the optional demo/PostgreSQL Docker stack:
 
-## Docker and PostgreSQL (optional)
-
-```sh
+```bash
 docker compose up --build
 ```
 
-Open http://127.0.0.1:8001. This Compose deployment runs the **demo** with PostgreSQL, retaining data in a named volume. Change the local example database password via `.env.example` → `.env`. PostgreSQL has no host port. Stop with `docker compose down`; the volume remains. Run real mode from the host CLI, where Docker and Ollama are available. The dashboard container deliberately has no Docker socket mounted.
+Visit http://127.0.0.1:8001. The dashboard container does **not** mount the host Docker socket; real-mode execution runs via the host CLI. Compose retains PostgreSQL data in a volume, and the application is intended for local use only. Configure credentials before any broader exposure; **do not deploy this unmodified as a public multi-user service**.
 
-## License and dependencies
+## Code and evidence map
 
-Project source is MIT licensed. Third-party packages retain their own licenses. `requirements.txt` pins direct dependencies; `requirements-lock.txt` records the full development environment used for validation. Dependencies and model weights are downloaded separately and are not bundled in this ZIP. No paid API service or cloud deployment is configured.
+```text
+forge/                   LangGraph workflow, API, policy, execution and CLI
+web/                     Browser dashboard
+examples/mini_repo/      Small intentionally buggy Python demo project
+docs/                    Architecture, real AI setup, security and demo guides
+reports/                 Demo evaluation, verification report and screenshots
+tests/                   Unit and mocked integration tests
+scripts/                 Helper scripts
+Dockerfile               App container
+Dockerfile.runner        Restricted test runner
+compose.yaml             Optional dashboard/PostgreSQL stack
+START_FORGEAGENT.bat     Windows startup
+setup_windows.bat        Windows dependency installation
+```
+
+The initial validation reported **42 passing Python tests** and successful scripted browser workflows. The [verification report](reports/verification.md) distinguishes executed runs from **mocked** Ollama/GitHub/Docker integration checks and **unverified** live integrations.
+
+## Internship interview summary
+
+> Built ForgeAgent, a LangGraph-based Python software engineering workbench with FastAPI, local test execution, patch review, and optional Ollama-powered code proposals. Designed a bounded inspect–propose–verify workflow with test evidence, restricted edits, diff exports, and a guarded GitHub draft-pull-request integration. Validated three scripted demo cases and 42 automated tests; live LLM performance and remote PR publishing remain separate, unverified integrations.
+
+## Limitations, safety and licensing
+
+- **Deterministic demo ≠ LLM-generated fix.** The shipped reproducible demo uses scripted patches.
+- **Tests passing ≠ a correct or safe patch.** Review code and use trusted repositories.
+- **Local-first security.** The session token does not replace multi-user authentication; keep the app bound to loopback.
+- **Docker is a safeguard, not a perfect sandbox.** Keep the Docker daemon protected and avoid exposing execution services publicly.
+- **Not autonomous production software.** No auto-merge, general-purpose repository support, or demonstrated real-issue success rate.
+
+Project source is licensed under [MIT](LICENSE). Dependencies and downloaded model weights have their own terms.
