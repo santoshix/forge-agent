@@ -1,4 +1,4 @@
-# Verification report
+# Original delivery verification report (historical snapshot)
 
 Validation date: 2026-11-02. Environment: Linux, Python 3.12.14.
 
@@ -21,8 +21,12 @@ Validation date: 2026-11-02. Environment: Linux, Python 3.12.14.
 
 ## Not live-verified here
 
-- Windows batch execution and package installation. Launchers target Python 3.12. Windows/Ubuntu GitHub CI is configured but has not run remotely yet.
+- Windows batch execution and package installation. Launchers target Python 3.12. At original delivery time, Windows/Ubuntu GitHub CI had not run remotely yet; see the live Actions link below for its current results.
 - Docker execution, Compose build, PostgreSQL and live Ollama inference. These services were unavailable in the build environment.
 - GitHub token permissions and actual remote draft PR creation.
 
 The demo is validated end to end. Optional integrations are implemented and documented with the boundaries above. This is a bounded portfolio prototype, not a production-readiness claim.
+
+## Later repository publication
+
+The repository is now publicly hosted at https://github.com/santoshix/forge-agent. See https://github.com/santoshix/forge-agent/actions for subsequent GitHub Actions runs. A passing GitHub CI run does not itself verify the live Ollama workflow, Docker runner, remote draft PR publication, or production readiness. The original executed-versus-mocked distinctions above still apply.
